@@ -3,6 +3,7 @@ package ru.discode.passwords;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.AsyncTask;
@@ -98,7 +99,7 @@ public class LoginActivity extends AppCompatActivity  {
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password)) {
+        if (TextUtils.isEmpty(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -114,9 +115,11 @@ public class LoginActivity extends AppCompatActivity  {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            
-            mAuthTask = new UserLoginTask(password);
-            mAuthTask.execute((Void) null);
+            Intent intent = new Intent(this, PasswordListActivity.class);
+            intent.putExtra(PasswordListActivity.CODE_EXTRA, password);
+            startActivity(intent);
+//            mAuthTask = new UserLoginTask(password);
+//            mAuthTask.execute((Void) null);
         }
     }
 
