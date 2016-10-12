@@ -16,7 +16,7 @@ public class PasswordEntry implements BaseColumns {
             "CREATE TABLE " + PasswordEntry.TABLE_NAME + " ("+
                     PasswordEntry._ID + " INTEGER PRIMARY KEY," +
                     PasswordEntry.COLUMN_NAME_TITLE + " TEXT," +
-                    PasswordEntry.COLUMN_NAME_PASSWORD + " TEXT," + " )";
+                    PasswordEntry.COLUMN_NAME_PASSWORD + " TEXT" + " )";
     public static final String SQL_DELETE_TABLE =
             "DROP TABLE IF EXISTS "+TABLE_NAME;
 }

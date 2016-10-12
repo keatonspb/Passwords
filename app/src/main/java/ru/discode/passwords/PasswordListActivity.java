@@ -2,15 +2,16 @@ package ru.discode.passwords;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
 import ru.discode.passwords.entry.PasswordEntry;
 
@@ -18,7 +19,7 @@ public class PasswordListActivity extends AppCompatActivity {
     public static String CODE_EXTRA = "CODE";
     private String code;
     private RecyclerView listView;
-    private RecyclerView.Adapter adapter;
+    private PasswordListAdapter adapter;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,7 +29,7 @@ public class PasswordListActivity extends AppCompatActivity {
 
         code = getIntent().getStringExtra(CODE_EXTRA);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.add_password);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -38,7 +39,8 @@ public class PasswordListActivity extends AppCompatActivity {
         });
 
         listView = (RecyclerView) findViewById(R.id.passwords_list);
-
+        listView.setLayoutManager(new LinearLayoutManager(this));
+        getList();
     }
 
     private void getList() {
@@ -50,15 +52,10 @@ public class PasswordListActivity extends AppCompatActivity {
                 PasswordEntry.COLUMN_NAME_PASSWORD
         };
         Cursor c = db.query(PasswordEntry.TABLE_NAME, projection, null, null, null, null, null);
-
+        adapter = new PasswordListAdapter(this);
+        adapter.swapCursor(c);
+        listView.setAdapter(adapter);
     }
 
-    private class GetListAsync extends AsyncTask {
-
-        @Override
-        protected Object doInBackground(Object[] objects) {
-            return null;
-        }
-    }
 
 }
