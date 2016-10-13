@@ -23,7 +23,7 @@ import android.widget.ScrollView;
 import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
 import ru.discode.passwords.entry.PasswordEntry;
-import ru.discode.passwords.helper.Encryptor;
+import ru.discode.passwords.helper.AESHelper;
 
 public class PasswordListActivity extends AppCompatActivity {
     public static String CODE_EXTRA = "CODE";
@@ -98,6 +98,16 @@ public class PasswordListActivity extends AppCompatActivity {
         showProgress(true);
         AddPassword tasl = new AddPassword();
         tasl.execute(name, content);
+        String encryptedData = null;
+
+            encryptedData = AESHelper.encrypt(name, code);
+
+        Log.v("EncryptDecrypt", "Encoded String " + encryptedData);
+        String decryptedData = null;
+
+            decryptedData = AESHelper.decrypt(name, code);
+
+        Log.v("EncryptDecrypt", "Decoded String " + decryptedData);
     }
 
     private class AddPassword<String, Integer, Boolean> extends AsyncTask {
@@ -107,15 +117,12 @@ public class PasswordListActivity extends AppCompatActivity {
             PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
             SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
-            String encryptedData = null;
             try {
-                encryptedData = Encryptor.encrypt(code, "asdadasdasdad");
+
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.v("EncryptDecrypt", "Encoded String " + encryptedData);
-            String decryptedData = Encryptor.decrypt(code, encryptedData);
-            Log.v("EncryptDecrypt", "Decoded String " + decryptedData);
             return null;
         }
     }
