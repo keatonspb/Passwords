@@ -18,7 +18,7 @@ public class AESHelper {/**
 public static String encrypt(String clearText, String seed) {
     byte[] encryptedText = null;
     try {
-        byte[] keyData = seed.getBytes();
+        byte[] keyData = getRawKey(seed.getBytes());
         SecretKey ks = new SecretKeySpec(keyData, "AES");
         Cipher c = Cipher.getInstance("AES");
         c.init(Cipher.ENCRYPT_MODE, ks);
@@ -38,16 +38,27 @@ public static String encrypt(String clearText, String seed) {
     public static String decrypt (String encryptedText, String seed) {
         byte[] clearText = null;
         try {
-            byte[] keyData = seed.getBytes();
+            byte[] keyData = getRawKey(seed.getBytes());
             SecretKey ks = new SecretKeySpec(keyData, "AES");
             Cipher c = Cipher.getInstance("AES");
             c.init(Cipher.DECRYPT_MODE, ks);
-            clearText = c.doFinal(Base64.decode(encryptedText, Base64.DEFAULT));
+            byte[] decode = Base64.decode(encryptedText, Base64.DEFAULT);
+            clearText = c.doFinal(decode);
             return new String(clearText, "UTF-8");
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private static byte[] getRawKey(byte[] seed) throws Exception {
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+        sr.setSeed(seed);
+        kgen.init(128, sr); // 192 and 256 bits may not be available
+        SecretKey skey = kgen.generateKey();
+        byte[] raw = skey.getEncoded();
+        return raw;
     }
 
 }
