@@ -25,7 +25,7 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     @Override
     public PasswordListAdapter.PasswordViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         final View view = this.layoutInflater.inflate(R.layout.password_list_item, parent, false);
-        return null;
+        return new PasswordViewHolder(view);
     }
 
     @Override

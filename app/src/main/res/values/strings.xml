@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">Captain Password</string>
+    <string name="app_name">Passwords</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Cap Code</string>
     <string name="action_sign_in">Войти</string>
-    <string name="action_sign_in_short">Sign in</string>
+    <string name="action_sign_in_short">Ввести код</string>
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
@@ -13,6 +13,10 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
-    <string name="title_activity_password_list">PasswordListActivity</string>
+    <string name="title_activity_password_list">Список паролей</string>
+    <string name="password_name">Название</string>
+    <string name="password_content">Пароль</string>
+    <string name="promt_add_password">Добавить</string>
+    <string name="promt_cancel">Отмена</string>
 
 </resources>
