@@ -98,16 +98,16 @@ public class PasswordListActivity extends AppCompatActivity {
         showProgress(true);
         AddPassword tasl = new AddPassword();
         tasl.execute(name, content);
-        String encryptedData = null;
+        byte[] encryptedData = null;
 
-            encryptedData = AESHelper.encrypt(name, code);
+            encryptedData = AESHelper.encrypt(code, name.getBytes(), "asdad");
 
-        Log.v("EncryptDecrypt", "Encoded String " + encryptedData);
-        String decryptedData = null;
+        Log.v("EncryptDecrypt", "Encoded String " + encryptedData.toString());
+        byte[] decryptedData = null;
 
-            decryptedData = AESHelper.decrypt(name, code);
+            decryptedData = AESHelper.decrypt(code, name.getBytes(), "asdad");
 
-        Log.v("EncryptDecrypt", "Decoded String " + decryptedData);
+        Log.v("EncryptDecrypt", "Decoded String " + new String(decryptedData));
     }
 
     private class AddPassword<String, Integer, Boolean> extends AsyncTask {
