@@ -3,6 +3,7 @@ package ru.discode.passwords.adapter;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,11 +25,15 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     private final LayoutInflater layoutInflater;
     private Context ctx;
     private String code;
+    private onClickListener onClickListener;
     public PasswordListAdapter(final Context context, String code) {
         super();
         this.layoutInflater = LayoutInflater.from(context);
         this.code = code;
         this.ctx = context;
+    }
+    public void setOnClickListener(onClickListener onClickListener) {
+        this.onClickListener = onClickListener;
     }
     @Override
     public PasswordListAdapter.PasswordViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -42,12 +47,16 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     }
 
     public class PasswordViewHolder extends RecyclerView.ViewHolder {
+        private View view;
         private TextView title;
+        private Long id;
         public PasswordViewHolder(View itemView) {
             super(itemView);
+            this.view = itemView;
             this.title = (TextView) itemView.findViewById(R.id.password_title);
         }
         public void bindData(final Cursor cursor) {
+            this.id = cursor.getLong(cursor.getColumnIndex(PasswordEntry._ID));
             String name = cursor.getString(cursor.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE));
             try {
                 name = AESCrypt.decrypt(code, name);
@@ -57,7 +66,22 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
                 name = ctx.getResources().getString(R.string.decrypt_error_string);
             }
             this.title.setText(name);
+
+            if(onClickListener != null) {
+                view.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        onClickListener.onClick(PasswordViewHolder.this.id);
+                    }
+                });
+            }
+
         }
 
+    }
+
+
+    public interface onClickListener {
+        void onClick(Long id);
     }
 }

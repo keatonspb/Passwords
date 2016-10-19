@@ -19,4 +19,8 @@ public class PasswordEntry implements BaseColumns {
                     PasswordEntry.COLUMN_NAME_CONTENT + " TEXT" + " )";
     public static final String SQL_DELETE_TABLE =
             "DROP TABLE IF EXISTS "+TABLE_NAME;
+
+    public Long id;
+    public String title;
+    public String content;
 }

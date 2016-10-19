@@ -27,7 +27,7 @@ import ru.discode.passwords.entry.PasswordEntry;
 import ru.discode.passwords.helper.AESCrypt;
 import ru.discode.passwords.util.SLog;
 
-public class PasswordListActivity extends AppCompatActivity {
+public class PasswordListActivity extends AppCompatActivity implements PasswordListAdapter.onClickListener {
     public static String CODE_EXTRA = "CODE";
     private String code;
     private RecyclerView listView;
@@ -71,6 +71,7 @@ public class PasswordListActivity extends AppCompatActivity {
         Cursor c = db.query(PasswordEntry.TABLE_NAME, projection, null, null, null, null, null);
         adapter = new PasswordListAdapter(this, code);
         adapter.swapCursor(c);
+        adapter.setOnClickListener(this);
         listView.setAdapter(adapter);
         showProgress(false);
     }
@@ -97,6 +98,31 @@ public class PasswordListActivity extends AppCompatActivity {
         builder.create().show();
     }
 
+    public void showEditDialog(PasswordEntry passwordEntry) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.edit_password, null);
+        final EditText nameEditText = (EditText) view.findViewById(R.id.title);
+        nameEditText.setText(passwordEntry.title);
+        final EditText contentEditText = (EditText) view.findViewById(R.id.content);
+        contentEditText.setText(passwordEntry.content);
+        final Long id = passwordEntry.id;
+        builder.setView(view);
+        builder.setPositiveButton(R.string.promt_add_password, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                savePassword(id, nameEditText.getText().toString(), contentEditText.getText().toString());
+            }
+        });
+        builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
     private void addPassword(String name, String content) {
         SLog.d("addPassword", "name"+name);
         SLog.d("addPassword", "content"+content);
@@ -107,11 +133,17 @@ public class PasswordListActivity extends AppCompatActivity {
         } catch (GeneralSecurityException e) {
             SLog.d("PS", e.getMessage());
         }
-
         AddPassword task = new AddPassword();
         task.execute(name, content);
+    }
 
+    private void savePassword(Long id, String name, String content) {
 
+    }
+
+    @Override
+    public void onClick(Long id) {
+        new GetPassword().execute(id);
     }
 
     private class AddPassword extends AsyncTask<String, Void, Long> {
@@ -133,6 +165,59 @@ public class PasswordListActivity extends AppCompatActivity {
             super.onPostExecute(aLong);
             makeMessage("Пароль сохранен");
             getList();
+        }
+    }
+
+    private class GetPassword extends AsyncTask<Long, Void, PasswordEntry> {
+
+        @Override
+        protected PasswordEntry doInBackground(Long... parameter) {
+            PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
+            SQLiteDatabase db = passwordReaderDbHelper.getReadableDatabase();
+
+            String[] projection = {
+                    PasswordEntry._ID,
+                    PasswordEntry.COLUMN_NAME_TITLE,
+                    PasswordEntry.COLUMN_NAME_CONTENT,
+            };
+
+            String selection = PasswordEntry._ID + " = ?";
+            String[] selectionArgs = { String.valueOf(parameter[0]) };
+
+            Cursor c = db.query(PasswordEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+                    );
+            PasswordEntry pe = new PasswordEntry();
+            if(c.getCount() == 1) {
+                c.moveToFirst();
+                try {
+                    pe.id = c.getLong(c.getColumnIndex(PasswordEntry._ID));
+                    pe.title = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE)));
+                    pe.content = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_CONTENT)));
+                } catch (GeneralSecurityException e) {
+
+                    return null;
+                }
+
+            }
+            return pe;
+        }
+
+        @Override
+        protected void onPostExecute(PasswordEntry entry) {
+            super.onPostExecute(entry);
+            if(entry == null) {
+                makeMessage(getResources().getString(R.string.decrypt_error_string));
+            } else {
+                showEditDialog(entry);
+            }
+
+
         }
     }
     protected void makeMessage(String text) {
