@@ -8,22 +8,24 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.view.ScrollingView;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 
+import java.security.GeneralSecurityException;
+
 import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
 import ru.discode.passwords.entry.PasswordEntry;
-import ru.discode.passwords.helper.AESHelper;
+import ru.discode.passwords.helper.AESCrypt;
+import ru.discode.passwords.util.SLog;
 
 public class PasswordListActivity extends AppCompatActivity {
     public static String CODE_EXTRA = "CODE";
@@ -64,12 +66,13 @@ public class PasswordListActivity extends AppCompatActivity {
         String[] projection = {
                 PasswordEntry._ID,
                 PasswordEntry.COLUMN_NAME_TITLE,
-                PasswordEntry.COLUMN_NAME_PASSWORD
+                PasswordEntry.COLUMN_NAME_CONTENT
         };
         Cursor c = db.query(PasswordEntry.TABLE_NAME, projection, null, null, null, null, null);
-        adapter = new PasswordListAdapter(this);
+        adapter = new PasswordListAdapter(this, code);
         adapter.swapCursor(c);
         listView.setAdapter(adapter);
+        showProgress(false);
     }
 
     private void showAddDialog() {
@@ -78,7 +81,7 @@ public class PasswordListActivity extends AppCompatActivity {
         View view = inflater.inflate(R.layout.edit_password, null);
         final EditText nameEditText = (EditText) view.findViewById(R.id.title);
         final EditText contentEditText = (EditText) view.findViewById(R.id.content);
-        builder.setView(inflater.inflate(R.layout.edit_password, null));
+        builder.setView(view);
         builder.setPositiveButton(R.string.promt_add_password, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -95,38 +98,48 @@ public class PasswordListActivity extends AppCompatActivity {
     }
 
     private void addPassword(String name, String content) {
+        SLog.d("addPassword", "name"+name);
+        SLog.d("addPassword", "content"+content);
         showProgress(true);
-        AddPassword tasl = new AddPassword();
-        tasl.execute(name, content);
-        byte[] encryptedData = null;
+        try {
+            name = AESCrypt.encrypt(code, name);
+            content = AESCrypt.encrypt(code, content);
+        } catch (GeneralSecurityException e) {
+            SLog.d("PS", e.getMessage());
+        }
 
-            encryptedData = AESHelper.encrypt(code, name.getBytes(), "asdad");
+        AddPassword task = new AddPassword();
+        task.execute(name, content);
 
-        Log.v("EncryptDecrypt", "Encoded String " + encryptedData.toString());
-        byte[] decryptedData = null;
 
-            decryptedData = AESHelper.decrypt(code, name.getBytes(), "asdad");
-
-        Log.v("EncryptDecrypt", "Decoded String " + new String(decryptedData));
     }
 
-    private class AddPassword<String, Integer, Boolean> extends AsyncTask {
+    private class AddPassword extends AsyncTask<String, Void, Long> {
 
         @Override
-        protected Boolean doInBackground(Object[] objects) {
+        protected Long doInBackground(String... parameter) {
             PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
             SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
-            try {
+            values.put(PasswordEntry.COLUMN_NAME_TITLE, (java.lang.String) parameter[0]);
+            values.put(PasswordEntry.COLUMN_NAME_CONTENT, (java.lang.String) parameter[1]);
+            long newRowId;
+            newRowId = db.insert(PasswordEntry.TABLE_NAME, null, values);
+            return newRowId;
+        }
 
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
+        @Override
+        protected void onPostExecute(Long aLong) {
+            super.onPostExecute(aLong);
+            makeMessage("Пароль сохранен");
+            getList();
         }
     }
+    protected void makeMessage(String text) {
 
+        Snackbar.make(scrollingView, text, Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+    }
     /**
      * Показывае загрузчик
      */

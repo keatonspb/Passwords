@@ -18,5 +18,6 @@
     <string name="password_content">Пароль</string>
     <string name="promt_add_password">Добавить</string>
     <string name="promt_cancel">Отмена</string>
+    <string name="decrypt_error_string">Ошибка при расшифровки</string>
 
 </resources>

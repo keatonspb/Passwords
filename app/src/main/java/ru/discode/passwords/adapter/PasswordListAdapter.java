@@ -8,8 +8,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.security.GeneralSecurityException;
+
 import ru.discode.passwords.R;
 import ru.discode.passwords.entry.PasswordEntry;
+import ru.discode.passwords.helper.AESCrypt;
+import ru.discode.passwords.util.SLog;
 
 /**
  * Created by broadcaster on 12.10.2016.
@@ -18,9 +22,13 @@ import ru.discode.passwords.entry.PasswordEntry;
 public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListAdapter.PasswordViewHolder> {
 
     private final LayoutInflater layoutInflater;
-    public PasswordListAdapter(final Context context) {
+    private Context ctx;
+    private String code;
+    public PasswordListAdapter(final Context context, String code) {
         super();
         this.layoutInflater = LayoutInflater.from(context);
+        this.code = code;
+        this.ctx = context;
     }
     @Override
     public PasswordListAdapter.PasswordViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -40,7 +48,15 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
             this.title = (TextView) itemView.findViewById(R.id.password_title);
         }
         public void bindData(final Cursor cursor) {
-            this.title.setText(cursor.getString(cursor.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE)));
+            String name = cursor.getString(cursor.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE));
+            try {
+                name = AESCrypt.decrypt(code, name);
+            } catch (GeneralSecurityException e) {
+                SLog.d("PasswordViewHolder", "decrypt error");
+
+                name = ctx.getResources().getString(R.string.decrypt_error_string);
+            }
+            this.title.setText(name);
         }
 
     }
