@@ -5,6 +5,14 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -26,7 +34,6 @@ import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
 import ru.discode.passwords.entry.PasswordEntry;
 import ru.discode.passwords.helper.AESCrypt;
-import ru.discode.passwords.util.PasswordTouchHelper;
 import ru.discode.passwords.util.SLog;
 
 public class PasswordListActivity extends AppCompatActivity implements PasswordListAdapter.onTouchListener {
@@ -306,6 +313,64 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             scrollingView.setVisibility(View.VISIBLE);
         }
 
+    }
+
+    public class PasswordTouchHelper extends ItemTouchHelper.SimpleCallback {
+        private PasswordListAdapter passwordListAdapter;
+        Drawable background;
+
+        boolean initiated;
+        public PasswordTouchHelper(PasswordListAdapter passwordListAdapter){
+            super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT);
+            this.passwordListAdapter = passwordListAdapter;
+            background = new ColorDrawable(Color.RED);
+        }
+
+        private void init() {
+
+            initiated = true;
+        }
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            passwordListAdapter.remove(viewHolder.getAdapterPosition());
+
+        }
+
+        @Override
+        public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            Bitmap icon;
+            Paint p = new Paint();
+            if(actionState == ItemTouchHelper.ACTION_STATE_SWIPE){
+
+                View itemView = viewHolder.itemView;
+                float height = (float) itemView.getBottom() - (float) itemView.getTop();
+                float width = height / 3;
+
+                if(dX > 0){
+//                    p.setColor(Color.parseColor("#388E3C"));
+//                    RectF background = new RectF((float) itemView.getLeft(), (float) itemView.getTop(), dX,(float) itemView.getBottom());
+//                    c.drawRect(background,p);
+//                    icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_edit_white);
+//                    RectF icon_dest = new RectF((float) itemView.getLeft() + width ,(float) itemView.getTop() + width,(float) itemView.getLeft()+ 2*width,(float)itemView.getBottom() - width);
+//                    c.drawBitmap(icon,null,icon_dest,p);
+                } else {
+                    p.setColor(Color.parseColor("#D32F2F"));
+                    RectF background = new RectF((float) itemView.getRight() + dX, (float) itemView.getTop(),(float) itemView.getRight(), (float) itemView.getBottom());
+                    c.drawRect(background,p);
+                    icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_delete_white);
+                    RectF icon_dest = new RectF((float) itemView.getRight() - 2*width ,(float) itemView.getTop() + width,(float) itemView.getRight() - width,(float)itemView.getBottom() - width);
+                    c.drawBitmap(icon,null,icon_dest,p);
+                }
+            }
+
+
+            super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+        }
     }
 
 
