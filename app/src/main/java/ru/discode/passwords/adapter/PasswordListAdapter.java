@@ -3,7 +3,6 @@ package ru.discode.passwords.adapter;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,15 +24,15 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     private final LayoutInflater layoutInflater;
     private Context ctx;
     private String code;
-    private onClickListener onClickListener;
+    private onTouchListener onTouchListener;
     public PasswordListAdapter(final Context context, String code) {
         super();
         this.layoutInflater = LayoutInflater.from(context);
         this.code = code;
         this.ctx = context;
     }
-    public void setOnClickListener(onClickListener onClickListener) {
-        this.onClickListener = onClickListener;
+    public void setOnTouchListener(onTouchListener onTouchListener) {
+        this.onTouchListener = onTouchListener;
     }
     @Override
     public PasswordListAdapter.PasswordViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -46,6 +45,12 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
         holder.bindData(cursor);
     }
 
+    public void remove(int position) {
+        if(onTouchListener != null) {
+            onTouchListener.onSwipe(getItem(position).getLong(getCursor().getColumnIndex(PasswordEntry._ID)));
+        }
+    }
+
     public class PasswordViewHolder extends RecyclerView.ViewHolder {
         private View view;
         private TextView title;
@@ -54,6 +59,9 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
             super(itemView);
             this.view = itemView;
             this.title = (TextView) itemView.findViewById(R.id.password_title);
+        }
+        public Long getId() {
+            return id;
         }
         public void bindData(final Cursor cursor) {
             this.id = cursor.getLong(cursor.getColumnIndex(PasswordEntry._ID));
@@ -67,11 +75,11 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
             }
             this.title.setText(name);
 
-            if(onClickListener != null) {
+            if(onTouchListener != null) {
                 view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        onClickListener.onClick(PasswordViewHolder.this.id);
+                        onTouchListener.onClick(PasswordViewHolder.this.id);
                     }
                 });
             }
@@ -81,7 +89,9 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     }
 
 
-    public interface onClickListener {
+    public interface onTouchListener {
         void onClick(Long id);
+        void onSwipe(Long id);
     }
+
 }

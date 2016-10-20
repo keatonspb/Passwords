@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -25,9 +26,10 @@ import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
 import ru.discode.passwords.entry.PasswordEntry;
 import ru.discode.passwords.helper.AESCrypt;
+import ru.discode.passwords.util.PasswordTouchHelper;
 import ru.discode.passwords.util.SLog;
 
-public class PasswordListActivity extends AppCompatActivity implements PasswordListAdapter.onClickListener {
+public class PasswordListActivity extends AppCompatActivity implements PasswordListAdapter.onTouchListener {
     public static String CODE_EXTRA = "CODE";
     private String code;
     private RecyclerView listView;
@@ -55,6 +57,12 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
 
         listView = (RecyclerView) findViewById(R.id.passwords_list);
         listView.setLayoutManager(new LinearLayoutManager(this));
+        listView.setHasFixedSize(true);
+        adapter = new PasswordListAdapter(this, code);
+        ItemTouchHelper.Callback callback = new PasswordTouchHelper(adapter);
+        ItemTouchHelper helper = new ItemTouchHelper(callback);
+        helper.attachToRecyclerView(listView);
+
         scrollingView = (ScrollView) findViewById(R.id.list_content);
         progressBar = (ProgressBar) findViewById(R.id.progress);
         getList();
@@ -69,9 +77,9 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                 PasswordEntry.COLUMN_NAME_CONTENT
         };
         Cursor c = db.query(PasswordEntry.TABLE_NAME, projection, null, null, null, null, null);
-        adapter = new PasswordListAdapter(this, code);
+
         adapter.swapCursor(c);
-        adapter.setOnClickListener(this);
+        adapter.setOnTouchListener(this);
         listView.setAdapter(adapter);
         showProgress(false);
     }
@@ -123,6 +131,27 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         builder.create().show();
     }
 
+    public void showDoDeleteDialog(Long id) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        builder.setMessage(R.string.realy_delete);
+
+        builder.setPositiveButton(R.string.promt_delete_password, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+                getList();
+            }
+        });
+        builder.create().show();
+    }
+
     private void addPassword(String name, String content) {
         SLog.d("addPassword", "name"+name);
         SLog.d("addPassword", "content"+content);
@@ -138,6 +167,18 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
     }
 
     private void savePassword(Long id, String name, String content) {
+        showProgress(true);
+
+        try {
+            name = AESCrypt.encrypt(code, name);
+            content = AESCrypt.encrypt(code, content);
+        } catch (GeneralSecurityException e) {
+            SLog.d("PS", e.getMessage());
+        }
+
+        SavePassword task = new SavePassword();
+        task.execute(id.toString(), name, content);
+
 
     }
 
@@ -146,8 +187,12 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         new GetPassword().execute(id);
     }
 
-    private class AddPassword extends AsyncTask<String, Void, Long> {
+    @Override
+    public void onSwipe(Long id) {
+        showDoDeleteDialog(id);
+    }
 
+    private class AddPassword extends AsyncTask<String, Void, Long> {
         @Override
         protected Long doInBackground(String... parameter) {
             PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
@@ -159,10 +204,34 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             newRowId = db.insert(PasswordEntry.TABLE_NAME, null, values);
             return newRowId;
         }
-
         @Override
         protected void onPostExecute(Long aLong) {
             super.onPostExecute(aLong);
+            makeMessage("Пароль сохранен");
+            getList();
+        }
+    }
+
+    private class SavePassword extends AsyncTask<String, Void, Integer> {
+        @Override
+        protected Integer doInBackground(String... parameter) {
+            PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
+            SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(PasswordEntry.COLUMN_NAME_TITLE, parameter[1]);
+            values.put(PasswordEntry.COLUMN_NAME_CONTENT, parameter[2]);
+            String selection = PasswordEntry._ID + " = ?";
+            String[] selectionArgs = { parameter[0] };
+            int count = db.update(
+                    PasswordEntry.TABLE_NAME,
+                    values,
+                    selection,
+                    selectionArgs);
+            return count;
+        }
+        @Override
+        protected void onPostExecute(Integer count) {
+            super.onPostExecute(count);
             makeMessage("Пароль сохранен");
             getList();
         }

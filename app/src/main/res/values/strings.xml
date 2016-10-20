@@ -19,5 +19,7 @@
     <string name="promt_add_password">Добавить</string>
     <string name="promt_cancel">Отмена</string>
     <string name="decrypt_error_string">Ошибка при расшифровки</string>
+    <string name="realy_delete">Вы действительно хотите далить данные?</string>
+    <string name="promt_delete_password">Удалить</string>
 
 </resources>
