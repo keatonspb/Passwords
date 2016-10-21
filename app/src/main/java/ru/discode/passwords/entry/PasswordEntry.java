@@ -24,5 +24,6 @@ public class PasswordEntry implements BaseColumns {
 
     public Long id;
     public String title;
+    public String login;
     public String content;
 }

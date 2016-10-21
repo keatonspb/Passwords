@@ -54,11 +54,13 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
     public class PasswordViewHolder extends RecyclerView.ViewHolder {
         private View view;
         private TextView title;
+        private TextView login;
         private Long id;
         public PasswordViewHolder(View itemView) {
             super(itemView);
             this.view = itemView;
             this.title = (TextView) itemView.findViewById(R.id.password_title);
+            this.login = (TextView) itemView.findViewById(R.id.password_login);
         }
         public Long getId() {
             return id;
@@ -66,14 +68,17 @@ public class PasswordListAdapter extends RecyclerViewCursorAdapter<PasswordListA
         public void bindData(final Cursor cursor) {
             this.id = cursor.getLong(cursor.getColumnIndex(PasswordEntry._ID));
             String name = cursor.getString(cursor.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE));
+            String login = cursor.getString(cursor.getColumnIndex(PasswordEntry.COLUMN_NAME_LOGIN));
             try {
                 name = AESCrypt.decrypt(code, name);
-            } catch (GeneralSecurityException e) {
+                login = AESCrypt.decrypt(code, login);
+            } catch (Exception e) {
                 SLog.d("PasswordViewHolder", "decrypt error");
 
                 name = ctx.getResources().getString(R.string.decrypt_error_string);
             }
             this.title.setText(name);
+            this.login.setText(login);
 
             if(onTouchListener != null) {
                 view.setOnClickListener(new View.OnClickListener() {

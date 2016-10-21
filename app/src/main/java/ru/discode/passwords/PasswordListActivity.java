@@ -81,6 +81,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         String[] projection = {
                 PasswordEntry._ID,
                 PasswordEntry.COLUMN_NAME_TITLE,
+                PasswordEntry.COLUMN_NAME_LOGIN,
                 PasswordEntry.COLUMN_NAME_CONTENT
         };
         Cursor c = db.query(PasswordEntry.TABLE_NAME, projection, null, null, null, null, null);
@@ -96,12 +97,13 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         LayoutInflater inflater = getLayoutInflater();
         View view = inflater.inflate(R.layout.edit_password, null);
         final EditText nameEditText = (EditText) view.findViewById(R.id.title);
+        final EditText loginEditText = (EditText) view.findViewById(R.id.login);
         final EditText contentEditText = (EditText) view.findViewById(R.id.content);
         builder.setView(view);
         builder.setPositiveButton(R.string.promt_add_password, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                addPassword(nameEditText.getText().toString(), contentEditText.getText().toString());
+                addPassword(nameEditText.getText().toString(), loginEditText.getText().toString(), contentEditText.getText().toString());
             }
         });
         builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
@@ -119,14 +121,16 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         View view = inflater.inflate(R.layout.edit_password, null);
         final EditText nameEditText = (EditText) view.findViewById(R.id.title);
         nameEditText.setText(passwordEntry.title);
+        final EditText loginEditText = (EditText) view.findViewById(R.id.login);
+        loginEditText.setText(passwordEntry.login);
         final EditText contentEditText = (EditText) view.findViewById(R.id.content);
         contentEditText.setText(passwordEntry.content);
         final Long id = passwordEntry.id;
         builder.setView(view);
-        builder.setPositiveButton(R.string.promt_add_password, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.promt_save_password, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                savePassword(id, nameEditText.getText().toString(), contentEditText.getText().toString());
+                savePassword(id, nameEditText.getText().toString(), loginEditText.getText().toString(), contentEditText.getText().toString());
             }
         });
         builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
@@ -158,32 +162,34 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         builder.create().show();
     }
 
-    private void addPassword(String name, String content) {
+    private void addPassword(String name, String login, String content) {
         SLog.d("addPassword", "name"+name);
         SLog.d("addPassword", "content"+content);
         showProgress(true);
         try {
             name = AESCrypt.encrypt(code, name);
+            login = AESCrypt.encrypt(code, login);
             content = AESCrypt.encrypt(code, content);
         } catch (GeneralSecurityException e) {
             SLog.d("PS", e.getMessage());
         }
         AddPassword task = new AddPassword();
-        task.execute(name, content);
+        task.execute(name, login, content);
     }
 
-    private void savePassword(Long id, String name, String content) {
+    private void savePassword(Long id, String name, String login, String content) {
         showProgress(true);
 
         try {
             name = AESCrypt.encrypt(code, name);
+            login = AESCrypt.encrypt(code, login);
             content = AESCrypt.encrypt(code, content);
         } catch (GeneralSecurityException e) {
             SLog.d("PS", e.getMessage());
         }
 
         SavePassword task = new SavePassword();
-        task.execute(id.toString(), name, content);
+        task.execute(id.toString(), name, login, content);
 
 
     }
@@ -212,8 +218,9 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
             SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
-            values.put(PasswordEntry.COLUMN_NAME_TITLE, (java.lang.String) parameter[0]);
-            values.put(PasswordEntry.COLUMN_NAME_CONTENT, (java.lang.String) parameter[1]);
+            values.put(PasswordEntry.COLUMN_NAME_TITLE, parameter[0]);
+            values.put(PasswordEntry.COLUMN_NAME_LOGIN, parameter[1]);
+            values.put(PasswordEntry.COLUMN_NAME_CONTENT, parameter[2]);
             long newRowId;
             newRowId = db.insert(PasswordEntry.TABLE_NAME, null, values);
             db.close();
@@ -234,7 +241,8 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
             ContentValues values = new ContentValues();
             values.put(PasswordEntry.COLUMN_NAME_TITLE, parameter[1]);
-            values.put(PasswordEntry.COLUMN_NAME_CONTENT, parameter[2]);
+            values.put(PasswordEntry.COLUMN_NAME_LOGIN, parameter[2]);
+            values.put(PasswordEntry.COLUMN_NAME_CONTENT, parameter[3]);
             String selection = PasswordEntry._ID + " = ?";
             String[] selectionArgs = { parameter[0] };
             int count = db.update(
@@ -291,6 +299,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             String[] projection = {
                     PasswordEntry._ID,
                     PasswordEntry.COLUMN_NAME_TITLE,
+                    PasswordEntry.COLUMN_NAME_LOGIN,
                     PasswordEntry.COLUMN_NAME_CONTENT,
             };
 
@@ -313,13 +322,13 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                     pe.id = c.getLong(c.getColumnIndex(PasswordEntry._ID));
                     pe.title = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE)));
                     pe.content = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_CONTENT)));
+                    pe.login = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_LOGIN)));
                 } catch (GeneralSecurityException e) {
 
                     return null;
                 }
 
             }
-            db.close();
             return pe;
         }
 

@@ -15,6 +15,7 @@
     </string>
     <string name="title_activity_password_list">Список паролей</string>
     <string name="password_name">Название</string>
+    <string name="password_login">Логин</string>
     <string name="password_content">Пароль</string>
     <string name="promt_add_password">Добавить</string>
     <string name="promt_cancel">Отмена</string>
@@ -22,5 +23,6 @@
     <string name="realy_delete">Вы действительно хотите далить данные?</string>
     <string name="promt_delete_password">Удалить</string>
     <string name="cant_delete">Не удалось удалить пароль</string>
+    <string name="promt_save_password">Сохранить</string>
 
 </resources>
