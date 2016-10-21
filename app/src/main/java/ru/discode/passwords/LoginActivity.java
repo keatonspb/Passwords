@@ -68,8 +68,13 @@ public class LoginActivity extends AppCompatActivity  {
         mProgressView = findViewById(R.id.login_progress);
     }
 
-
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mPasswordView != null) {
+            mPasswordView.setText("");
+        }
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.

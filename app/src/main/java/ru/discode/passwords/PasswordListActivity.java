@@ -79,6 +79,12 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         getList();
     }
 
+    @Override
+    protected void onStop() {
+        super.onPause();
+        finish();
+    }
+
     private void getList() {
         PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(this);
         SQLiteDatabase db = passwordReaderDbHelper.getReadableDatabase();
