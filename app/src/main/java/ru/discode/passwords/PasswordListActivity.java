@@ -23,12 +23,16 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 
 import ru.discode.passwords.adapter.PasswordListAdapter;
 import ru.discode.passwords.db.PasswordReaderDbHelper;
@@ -115,6 +119,32 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         builder.create().show();
     }
 
+    private void showChangePasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.change_code, null);
+        final EditText code_old = (EditText) view.findViewById(R.id.code_new);
+        final EditText code_new = (EditText) view.findViewById(R.id.code_new);
+        builder.setView(view);
+        builder.setPositiveButton(R.string.promt_change_code, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(code_old.getText().toString().equals(code)) {
+                    changeCode(code_new.getText().toString());
+                } else {
+                    makeMessage("Неверный старый код");
+                }
+            }
+        });
+        builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        builder.create().show();
+    }
+
     public void showEditDialog(PasswordEntry passwordEntry) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -162,6 +192,12 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         builder.create().show();
     }
 
+
+    private void changeCode(String code) {
+        showProgress(true);
+        ChangeCode tast = new ChangeCode();
+        tast.execute(code);
+    }
     private void addPassword(String name, String login, String content) {
         SLog.d("addPassword", "name"+name);
         SLog.d("addPassword", "content"+content);
@@ -211,6 +247,79 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
     public void onSwipe(Long id) {
         showDoDeleteDialog(id);
     }
+
+    private class ChangeCode extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... parameter) {
+            PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
+            SQLiteDatabase db = passwordReaderDbHelper.getReadableDatabase();
+            SQLiteDatabase dbwrite = passwordReaderDbHelper.getWritableDatabase();
+            String newcode = parameter[0];
+
+            String[] projection = {
+                    PasswordEntry._ID,
+                    PasswordEntry.COLUMN_NAME_TITLE,
+                    PasswordEntry.COLUMN_NAME_LOGIN,
+                    PasswordEntry.COLUMN_NAME_CONTENT,
+            };
+
+
+
+            Cursor c = db.query(PasswordEntry.TABLE_NAME,
+                    projection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            ArrayList<PasswordEntry> passwordEntriesToChange = new ArrayList<PasswordEntry>();
+            //Берем все пароли
+            while (c.moveToNext()) { {
+                try {
+                    Long id = c.getLong(c.getColumnIndex(PasswordEntry._ID));
+                    String title = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_TITLE)));
+                    String content = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_CONTENT)));
+                    String login = AESCrypt.decrypt(code, c.getString(c.getColumnIndex(PasswordEntry.COLUMN_NAME_LOGIN)));
+                    title = AESCrypt.encrypt(newcode, title);
+                    content = AESCrypt.encrypt(newcode, content);
+                    login = AESCrypt.encrypt(newcode, login);
+
+                    ContentValues values = new ContentValues();
+                    values.put(PasswordEntry.COLUMN_NAME_TITLE, title);
+                    values.put(PasswordEntry.COLUMN_NAME_LOGIN, login);
+                    values.put(PasswordEntry.COLUMN_NAME_CONTENT, content);
+                    String selection = PasswordEntry._ID + " = ?";
+                    String[] selectionArgs = { String.valueOf(id) };
+                    db.update(
+                            PasswordEntry.TABLE_NAME,
+                            values,
+                            selection,
+                            selectionArgs);
+
+                } catch (GeneralSecurityException e) {
+
+                }
+
+            }};
+
+            db.close();
+            dbwrite.close();
+            c.close();
+
+
+
+            return newcode;
+        }
+        @Override
+        protected void onPostExecute(String newcode) {
+            super.onPostExecute(newcode);
+            code = newcode;
+            makeMessage("Код изменен");
+            getList();
+        }
+    }
+
 
     private class AddPassword extends AsyncTask<String, Void, Long> {
         @Override
@@ -415,5 +524,22 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.context_menu, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.change_password:
+                showChangePasswordDialog();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 }

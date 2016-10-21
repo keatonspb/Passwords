@@ -24,5 +24,11 @@
     <string name="promt_delete_password">Удалить</string>
     <string name="cant_delete">Не удалось удалить пароль</string>
     <string name="promt_save_password">Сохранить</string>
+    <string name="change_password">Изменить пароль</string>
+    <string name="promt_change_code">Изменить</string>
+    <string name="promt_code_">Код еще раз</string>
+    <string name="promt_code">Код</string>
+    <string name="promt_old_code">Старый пароль</string>
+    <string name="promt_new_code">Новый пароль</string>
 
 </resources>
