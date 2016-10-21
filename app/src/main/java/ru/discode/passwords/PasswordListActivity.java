@@ -138,15 +138,14 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         builder.create().show();
     }
 
-    public void showDoDeleteDialog(Long id) {
+    public void showDoDeleteDialog(final Long id) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = getLayoutInflater();
         builder.setMessage(R.string.realy_delete);
 
         builder.setPositiveButton(R.string.promt_delete_password, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-
+                deletePassword(id);
             }
         });
         builder.setNeutralButton(R.string.promt_cancel, new DialogInterface.OnClickListener() {
@@ -185,6 +184,14 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
 
         SavePassword task = new SavePassword();
         task.execute(id.toString(), name, content);
+
+
+    }
+
+    private void deletePassword(Long id) {
+        showProgress(true);
+        DeletePassword task = new DeletePassword();
+        task.execute(id);
 
 
     }
@@ -244,6 +251,33 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         }
     }
 
+    private class DeletePassword extends AsyncTask<Long, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Long... parameter) {
+            PasswordReaderDbHelper passwordReaderDbHelper = new PasswordReaderDbHelper(PasswordListActivity.this);
+            SQLiteDatabase db = passwordReaderDbHelper.getWritableDatabase();
+
+            String selection = PasswordEntry._ID + " = ?";
+            String[] selectionArgs = { String.valueOf(parameter[0]) };
+            int count = db.delete(
+                    PasswordEntry.TABLE_NAME,
+                    selection,
+                    selectionArgs);
+            return count > 0;
+        }
+        @Override
+        protected void onPostExecute(Boolean success) {
+            super.onPostExecute(success);
+            if(success) {
+                makeMessage("Пароль удален");
+            } else {
+                makeMessage(R.string.cant_delete);
+            }
+            showProgress(true);
+            getList();
+        }
+    }
+
     private class GetPassword extends AsyncTask<Long, Void, PasswordEntry> {
 
         @Override
@@ -297,9 +331,12 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
         }
     }
     protected void makeMessage(String text) {
-
         Snackbar.make(scrollingView, text, Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+    }
+    protected void makeMessage(int textId) {
+        Snackbar.make(scrollingView, textId, Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
     }
     /**
      * Показывае загрузчик
@@ -318,18 +355,13 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
     public class PasswordTouchHelper extends ItemTouchHelper.SimpleCallback {
         private PasswordListAdapter passwordListAdapter;
         Drawable background;
-
-        boolean initiated;
         public PasswordTouchHelper(PasswordListAdapter passwordListAdapter){
             super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT);
             this.passwordListAdapter = passwordListAdapter;
             background = new ColorDrawable(Color.RED);
         }
 
-        private void init() {
 
-            initiated = true;
-        }
         @Override
         public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
             return false;
@@ -346,11 +378,9 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             Bitmap icon;
             Paint p = new Paint();
             if(actionState == ItemTouchHelper.ACTION_STATE_SWIPE){
-
                 View itemView = viewHolder.itemView;
                 float height = (float) itemView.getBottom() - (float) itemView.getTop();
                 float width = height / 3;
-
                 if(dX > 0){
 //                    p.setColor(Color.parseColor("#388E3C"));
 //                    RectF background = new RectF((float) itemView.getLeft(), (float) itemView.getTop(), dX,(float) itemView.getBottom());
@@ -367,8 +397,6 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                     c.drawBitmap(icon,null,icon_dest,p);
                 }
             }
-
-
             super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
         }
     }

@@ -21,5 +21,6 @@
     <string name="decrypt_error_string">Ошибка при расшифровки</string>
     <string name="realy_delete">Вы действительно хотите далить данные?</string>
     <string name="promt_delete_password">Удалить</string>
+    <string name="cant_delete">Не удалось удалить пароль</string>
 
 </resources>
