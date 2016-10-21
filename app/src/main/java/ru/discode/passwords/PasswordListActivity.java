@@ -216,6 +216,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
             values.put(PasswordEntry.COLUMN_NAME_CONTENT, (java.lang.String) parameter[1]);
             long newRowId;
             newRowId = db.insert(PasswordEntry.TABLE_NAME, null, values);
+            db.close();
             return newRowId;
         }
         @Override
@@ -241,6 +242,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                     values,
                     selection,
                     selectionArgs);
+            db.close();
             return count;
         }
         @Override
@@ -263,6 +265,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                     PasswordEntry.TABLE_NAME,
                     selection,
                     selectionArgs);
+            db.close();
             return count > 0;
         }
         @Override
@@ -302,6 +305,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                     null,
                     null
                     );
+
             PasswordEntry pe = new PasswordEntry();
             if(c.getCount() == 1) {
                 c.moveToFirst();
@@ -315,6 +319,7 @@ public class PasswordListActivity extends AppCompatActivity implements PasswordL
                 }
 
             }
+            db.close();
             return pe;
         }
 

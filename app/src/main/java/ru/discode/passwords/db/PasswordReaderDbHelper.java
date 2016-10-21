@@ -19,6 +19,7 @@ public class PasswordReaderDbHelper extends SQLiteOpenHelper {
     }
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
+            sqLiteDatabase.execSQL(PasswordEntry.SQL_DELETE_TABLE);
             sqLiteDatabase.execSQL(PasswordEntry.SQL_CREATE_TABLE);
     }
 
