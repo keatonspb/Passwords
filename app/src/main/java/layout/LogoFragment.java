@@ -49,7 +49,7 @@ public class LogoFragment extends Fragment {
     private void runAnimation() {
         if(this.asterisk != null) {
             final Handler h = new Handler();
-            final int delay = 200;
+            final int delay = 50;
             i = chars.length - 1;
             h.postDelayed(new Runnable() {
                 @Override
