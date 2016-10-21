@@ -26,6 +26,10 @@
             android:name=".PasswordListActivity"
             android:label="@string/title_activity_password_list"
             android:theme="@style/AppTheme.NoActionBar"></activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="456e65b7d711a1260b765695d6684b4b92df8b96" />
     </application>
 
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
